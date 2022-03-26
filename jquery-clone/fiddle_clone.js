@@ -3,8 +3,7 @@
       var type = typeOf(selector);
       var methods = plugins()[type];
       this.target = type == 'string' ? document.querySelector(selector) : selector;
-      console.log('constructor', methods, this.target);
-  
+      
       for ([key, value] of Object.entries(methods)) {
         methods[key] = methods[key].bind(methods, this.target);
       }
