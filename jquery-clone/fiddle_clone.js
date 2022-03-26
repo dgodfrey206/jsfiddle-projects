@@ -41,7 +41,7 @@
           }
         },
         string: {
-          click: function(self, callback, x, u) {
+          click: function(self, callback) {
             addEvent(self, 'click', function(event) {
               callback(event);
             });
@@ -120,7 +120,7 @@
                 return this.target.innerHTML;
               case arguments[0] === "":
                 this.target.innerHTML = '';
-                return;
+                return this;
               default:
                 for (var i = 0; i < len; i++) {
                   this.target.innerHTML += arguments[i];
