@@ -2,7 +2,8 @@
     function Plugins(selector) {
         var type = typeOf(selector);
         var methods = Plugins.prototype[type];
-        this.target = type == 'string' ? document.getElementById(selector) : selector;
+        this.target = type == 'string' ? document.querySelector(selector) : selector;
+        
         for ([key, value] of Object.entries(methods)) {
             methods[key] = methods[key].bind(methods, this.target);
         }
@@ -10,55 +11,46 @@
     }
 
     function addEvent(obj, event, func) {
-        var evt = event.replace('on', '');
         if (obj.addEventListener) {
             obj.addEventListener(event, function(e) {
-                return func.apply(obj, [e]);
+                return func.bind(obj, e);
             });
         } else if (obj.addEvent) {
             obj.addEvent(event, function(e) {
-                return func.apply(obj, [e]);
+                return func.bind(obj, e);
             });
         } else {
+            var evt = event.replace('on', '');
             obj[evt] = function(e) {
-                return func.apply(obj, [e]);
+                return func.bind(obj, e);
             };
         }
     }
     Plugins.prototype = {
-        domwindow: {
-            ready: function(callback) {
-
-            }
-        },
         document: {
-            ready: function(callback) {
-                addEvent(document, 'load', callback());
+            ready: function(self, callback) {
+                addEvent(self, 'load', callback);
             }
         },
         window: {
-            ready: function(callback) {
-                addEvent(window, 'load', callback());
+            ready: function(self, callback) {
+                addEvent(self, 'load', callback);
             }
         },
         string: {
-            click: function(callback) {
-                event.click = (event.click || callback) || function() { return false; };
-                if (!callback) {
-                    event.click(events);
-                }
-                addEvent('click', function() {
-                    callback(events);
+            click: function(self, callback) {
+                addEvent('click', function(e) {
+                    callback(e);
                 });
                 return this;
             },
-            blur: function(callback) {
+            blur: function(self, callback) {
                 var tag = this.target.tagName.toLowerCase(),
                     editable = this.attr('contenteditable');
                 if (tag === "input" || editable) this.target.onblur = callback;
                 return this;
             },
-            input: function(callback) {
+            input: function(self, callback) {
                 if ("onpropertychange" in inp) {
                     inp.attachEvent($.proxy(function() {
                         if (event.propertyName == "value") callback.apply(this.target);
@@ -69,7 +61,7 @@
                     }, false);
                 }
             },
-            mouseout: function(callback) {
+            mouseout: function(self, callback) {
                 this.target.onmouseout = callback;
                 return this;
             },
@@ -80,23 +72,23 @@
                 }
                 return null;
             },
-            empty: function() {
+            empty: function(self) {
                 var children = this.kids();
                 children.forEach(function(e) {
                     e.remove();
                 });
             },
-            hide: function() {
+            hide: function(self) {
                 this.css('display', 'none');
             },
-            show: function() {
+            show: function(self) {
                 this.css('display', 'block');
                 return this;
             },
-            putBefore: function(a) {
+            putBefore: function(self, a) {
                 a.parentNode.insertBefore(this.target, a);
             },
-            putAfter: function(a) {
+            putAfter: function(self, a) {
                 function sibiling(n) {
                     while ((x = n.nextSibling) && x.nodeType !== 1) {
                         x = x.nextSibling;
@@ -110,7 +102,7 @@
 
                 return this;
             },
-            html: function() {
+            html: function(self) {
                 var len = arguments.length;
                 switch (true) {
                 case len === 0:
@@ -126,7 +118,7 @@
                 }
                 return this;
             },
-            text: function() {
+            text: function(self) {
                 var len = arguments.length;
                 if (len === 0) {
                     return this.target.textContent;
@@ -139,7 +131,7 @@
                 }
                 return this;
             },
-            outer: function() {
+            outer: function(self) {
                 var len = arguments.length;
                 switch (true) {
                 case len === 0:
@@ -156,10 +148,10 @@
                 }
                 return this;
             },
-            data: function(a) {
+            data: function(self, a) {
                 return this.target.dataset ? this.target.dataset[a] : this.attr('data-' + a);
             },
-            css: function() {
+            css: function(self) {
                 var args = Array.prototype.slice.call(arguments),
                     len = args.length,
                     style_com = window.getComputedStyle,
@@ -185,7 +177,7 @@
                 }
                 return this;
             },
-            attr: function() {
+            attr: function(self) {
                 var args = Array.prototype.slice.call(arguments),
                     len = args.length,
                     get_attr = this.target.getAttribute(args[0]),
@@ -217,7 +209,7 @@
                 }
                 return this;
             },
-            prepend: function(elem) {
+            prepend: function(self, elem) {
                 var d;
                 if (typeOf(elem) == "string") {
                     if (this.kids().length) {
@@ -243,13 +235,13 @@
                 }
                 return this;
             },
-            appendTo: function(a) {
+            appendTo: function(self, a) {
                 a.append(this);
             },
-            prependTo: function(a) {
+            prependTo: function(self, a) {
                 a.prepend(this);
             },
-            addClass: function(a) {
+            addClass: function(self, a) {
                 if (this.attr('class') == null) {
                     this.target.className = a;
                 } else {
@@ -257,7 +249,7 @@
                 }
                 return this;
             },
-            removeClass: function(name) {
+            removeClass: function(self, name) {
                 var classlist = this.className.split(/\s/),
                     newlist = [],
                     idx = 0;
@@ -270,13 +262,13 @@
                 this.className = newlist.join(" ");
                 return this;
             },
-            remove: function() {
+            remove: function(self) {
                 this.parentNode.removeChild(this);
                 return this;
             },
             toggle: (function() {
                 var old, usingColor = false;
-                return function(obj) {
+                return function(self, obj) {
                     if (typeof elem == "string") {
                         elem = document.getElementById(elem);
                     }
@@ -341,7 +333,7 @@
                     }
                 };
             })(),
-            hover: function(onState, offState) {
+            hover: function(self, onState, offState) {
                 event.hover = event.hover ||
                 function() {
                     if (onState || offState) {
@@ -363,7 +355,7 @@
                 }));
                 return this;
             },
-            fadeIn: function(that) {
+            fadeIn: function(self, that) {
                 var s;
                 that.style.display = "block";
                 that.style.zoom = 1; // needed for IE
@@ -383,7 +375,7 @@
                 }, s);
                 return that;
             },
-            fadeOut: function(that) {
+            fadeOut: function(self, that) {
                 var self = that,
                     t;
                 if (!self instanceof Element) return false;
@@ -416,6 +408,6 @@
     }
 })(this);
 
-window.onload = (function() {
-    $('myDiv').append('<div id="next">Hello World</div>');
+$(window).ready(function() {
+    $('#myDiv').append('<div id="next">Hello World</div>');
 });
