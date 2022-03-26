@@ -4,8 +4,24 @@
     <meta charset="utf-8">
     <title>jQuery clone</title>
     <script src="fiddle_clone.js"></script>
+    <script>
+      $(window).ready(function() {
+        $('#myDiv').click(function() {
+            console.log('success');
+          });
+          $('#myDiv').append('<div id="next">Hello World</div>');
+          $('#myDiv').append('<div id="next2">Hello World</div>');
+          $('#next').click(function() {
+            console.log('next');
+          });
+          $('#next2').click(function() {
+            console.log('next2');
+          });
+      });
+    </script>
   </head>
   <body>
-    <div id="myDiv"></div>
+    <div id="myDiv">Hello</div>
   </body>
+  
 </html>
